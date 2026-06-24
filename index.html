@@ -328,7 +328,11 @@
       <span class="cnt-val" id="cnt">0</span>
       <div class="goal-track" id="goal-msg">0 done · <strong>7 to reach goal</strong></div>
       <div class="dots" id="dots"></div>
-      <button class="reset-btn" id="rst" disabled>↺ Complete all 7 steps to log return</button>
+      <div class="email-btns" style="margin-top:10px;margin-bottom:6px;">
+        <button class="email-btn" id="inc" style="background:#f0fdf4;border-color:#86efac;color:#15803d;">+ Add return</button>
+        <button class="email-btn minus" id="dec">− Undo</button>
+      </div>
+      <button class="reset-btn" id="rst" disabled>↺ Complete all 7 steps to auto-log return</button>
     </div>
 
     <!-- Email counter -->
@@ -449,6 +453,8 @@ document.getElementById('rst').addEventListener('click', function () {
   update();
 });
 
+document.getElementById('inc').addEventListener('click', () => { dayCount = Math.min(dayCount + 1, 99); update(); });
+document.getElementById('dec').addEventListener('click', () => { dayCount = Math.max(dayCount - 1, 0); update(); });
 document.getElementById('email-inc').addEventListener('click', () => { emailCount++; update(); });
 document.getElementById('email-dec').addEventListener('click', () => { emailCount = Math.max(emailCount - 1, 0); update(); });
 
@@ -456,4 +462,3 @@ update();
 </script>
 </body>
 </html>
-
