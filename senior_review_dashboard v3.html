@@ -1,0 +1,464 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Senior Review Dashboard</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap');
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'Inter', sans-serif;
+    background: #f4f4f0;
+    color: #111;
+    min-height: 100vh;
+    padding: 28px 24px;
+  }
+
+  header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+  }
+  header h1 { font-size: 17px; font-weight: 600; }
+  header p  { font-size: 12px; color: #777; }
+
+  .stats {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 12px;
+    margin-bottom: 20px;
+  }
+
+  .stat {
+    background: #fff;
+    border-radius: 10px;
+    padding: 14px 16px;
+    border: 1px solid #e8e8e4;
+  }
+  .stat-label { font-size: 11px; color: #888; margin-bottom: 6px; }
+  .stat-val   { font-size: 26px; font-weight: 600; color: #111; line-height: 1; }
+  .stat-val span { font-size: 14px; font-weight: 400; color: #aaa; }
+  .stat-sub   { font-size: 11px; color: #aaa; margin-top: 4px; }
+  .stat.highlight { border-color: #d1fae5; background: #f0fdf4; }
+  .stat.highlight .stat-val { color: #15803d; }
+  .stat.blue { border-color: #bfdbfe; background: #eff6ff; }
+  .stat.blue .stat-val { color: #1d4ed8; }
+
+  .pbar-wrap { background: #eee; border-radius: 99px; height: 5px; margin-top: 10px; overflow: hidden; }
+  .pbar-fill  { height: 100%; background: #16a34a; border-radius: 99px; transition: width 0.4s ease; }
+  .pbar-fill.blue { background: #3b82f6; }
+
+  .main {
+    display: grid;
+    grid-template-columns: 1fr 320px;
+    gap: 16px;
+    align-items: start;
+  }
+
+  .card {
+    background: #fff;
+    border-radius: 12px;
+    border: 1px solid #e8e8e4;
+    padding: 20px;
+  }
+
+  .card-title {
+    font-size: 13px;
+    font-weight: 600;
+    color: #111;
+    margin-bottom: 16px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  .step {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    padding: 10px 6px;
+    border-bottom: 1px solid #f0f0ec;
+    cursor: pointer;
+    border-radius: 6px;
+    transition: background 0.15s;
+  }
+  .step:last-child { border-bottom: none; }
+  .step:hover { background: #fafaf8; }
+
+  .cb {
+    width: 20px; height: 20px; min-width: 20px;
+    border: 1.5px solid #ccc;
+    border-radius: 5px;
+    display: flex; align-items: center; justify-content: center;
+    margin-top: 1px;
+    transition: all 0.15s;
+  }
+  .cb.on { background: #16a34a; border-color: #16a34a; }
+  .cb.on::after { content: '✓'; font-size: 12px; color: #fff; font-weight: 600; }
+
+  .step-num { font-size: 10px; color: #bbb; font-weight: 600; min-width: 14px; margin-top: 3px; text-align: right; }
+  .step-label { font-size: 13px; font-weight: 500; color: #111; margin-bottom: 2px; }
+  .step-desc  { font-size: 11px; color: #777; line-height: 1.5; }
+  .step.done .step-label { text-decoration: line-through; color: #aaa; }
+  .step.done .step-desc  { color: #ccc; }
+
+  .tag {
+    display: inline-block; font-size: 9px; font-weight: 600;
+    padding: 1px 6px; border-radius: 4px; margin-left: 6px;
+    vertical-align: middle; text-transform: uppercase; letter-spacing: 0.3px;
+  }
+  .tag-q { background: #fef9c3; color: #a16207; }
+  .tag-g { background: #fee2e2; color: #b91c1c; }
+
+  .right-col { display: flex; flex-direction: column; gap: 14px; }
+
+  /* Return counter card */
+  .counter-card {
+    background: #fff;
+    border-radius: 12px;
+    border: 1px solid #e8e8e4;
+    padding: 18px;
+  }
+  .counter-label { font-size: 11px; color: #888; margin-bottom: 10px; font-weight: 500; text-transform: uppercase; letter-spacing: 0.4px; }
+  .cnt-val { font-size: 36px; font-weight: 600; color: #111; text-align: center; display: block; margin-bottom: 6px; }
+  .goal-track { font-size: 12px; color: #777; text-align: center; margin-bottom: 12px; }
+  .goal-track strong { color: #15803d; }
+
+  .dots {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 6px;
+    margin-bottom: 6px;
+  }
+  .dot {
+    height: 28px; border-radius: 6px;
+    background: #f0f0ec; border: 1px solid #e5e5e0;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 10px; color: #bbb; font-weight: 600;
+    transition: all 0.2s;
+  }
+  .dot.filled { background: #dcfce7; border-color: #86efac; color: #15803d; }
+  .dot.goal   { background: #fef9c3; border-color: #fde68a; color: #a16207; }
+
+  .reset-btn {
+    width: 100%; padding: 10px;
+    border: 1px solid #16a34a; border-radius: 8px;
+    background: #f0fdf4; cursor: pointer;
+    font-size: 12px; font-weight: 600; color: #15803d;
+    font-family: 'Inter', sans-serif;
+    transition: background 0.1s;
+    margin-top: 8px;
+  }
+  .reset-btn:hover { background: #dcfce7; }
+  .reset-btn:disabled { background: #f5f5f3; border-color: #ddd; color: #bbb; cursor: default; }
+
+  /* Email counter card */
+  .email-card {
+    background: #fff;
+    border-radius: 12px;
+    border: 1px solid #bfdbfe;
+    background: #eff6ff;
+    padding: 18px;
+  }
+  .email-card .counter-label { color: #1d4ed8; }
+  .email-val { font-size: 36px; font-weight: 600; color: #1d4ed8; text-align: center; display: block; margin-bottom: 10px; }
+
+  .email-btns { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+
+  .email-btn {
+    padding: 9px;
+    border-radius: 8px;
+    border: 1px solid #93c5fd;
+    background: #dbeafe;
+    cursor: pointer;
+    font-size: 13px; font-weight: 600; color: #1d4ed8;
+    font-family: 'Inter', sans-serif;
+    transition: background 0.1s;
+  }
+  .email-btn:hover { background: #bfdbfe; }
+  .email-btn.minus {
+    background: #fff;
+    border-color: #e0e0dc;
+    color: #888;
+    font-size: 11px;
+  }
+  .email-btn.minus:hover { background: #f5f5f3; }
+
+  /* Time log */
+  .time-log {
+    background: #fff;
+    border-radius: 12px;
+    border: 1px solid #e8e8e4;
+    padding: 16px;
+  }
+  .time-log-title { font-size: 11px; font-weight: 600; color: #888; margin-bottom: 10px; text-transform: uppercase; letter-spacing: 0.5px; }
+  .log-entry {
+    display: flex; justify-content: space-between;
+    font-size: 12px; padding: 5px 0;
+    border-bottom: 1px solid #f4f4f0;
+    color: #555;
+  }
+  .log-entry:last-child { border-bottom: none; }
+  .log-entry .log-time { color: #15803d; font-weight: 500; }
+  .empty-log { font-size: 12px; color: #ccc; text-align: center; padding: 16px 0; }
+
+  #complete-banner {
+    display: none;
+    background: #f0fdf4;
+    border: 1px solid #86efac;
+    border-radius: 10px;
+    padding: 12px 16px;
+    text-align: center;
+    font-size: 13px;
+    font-weight: 500;
+    color: #15803d;
+    margin-bottom: 16px;
+  }
+
+  .all-done-flash { animation: flash 0.4s ease; }
+  @keyframes flash { 0% { background: #dcfce7; } 100% { background: #fff; } }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>Senior Review Dashboard</h1>
+  <p id="date-display"></p>
+</header>
+
+<div id="complete-banner">✅ Daily goal met (7)! Every extra return is a bonus — push for 15!</div>
+
+<div class="stats">
+  <div class="stat highlight">
+    <div class="stat-label">Returns today (goal: 7 / max: 15)</div>
+    <div class="stat-val" id="s-today">0 <span>/ 15</span></div>
+    <div class="pbar-wrap"><div class="pbar-fill" id="day-bar" style="width:0%"></div></div>
+  </div>
+  <div class="stat">
+    <div class="stat-label">This return</div>
+    <div class="stat-val" id="s-steps">0 <span>/ 7</span></div>
+    <div class="pbar-wrap"><div class="pbar-fill" id="step-bar" style="width:0%"></div></div>
+  </div>
+  <div class="stat blue">
+    <div class="stat-label">Emails sent today</div>
+    <div class="stat-val" id="s-emails">0</div>
+    <div class="pbar-wrap"><div class="pbar-fill blue" id="email-bar" style="width:0%"></div></div>
+  </div>
+  <div class="stat">
+    <div class="stat-label">Avg time / return</div>
+    <div class="stat-val" id="s-avg">—</div>
+    <div class="stat-sub">minutes</div>
+  </div>
+</div>
+
+<div class="main">
+
+  <div class="card">
+    <div class="card-title">
+      <span>Return checklist</span>
+      <span id="step-prog" style="font-size:12px;font-weight:400;color:#aaa;">0 of 7 complete</span>
+    </div>
+
+    <div class="step" data-i="0">
+      <span class="step-num">1</span><div class="cb" id="cb0"></div>
+      <div>
+        <div class="step-label">Open docs + return in browser tabs <span class="tag tag-q">~1 min</span></div>
+        <div class="step-desc">Client docs (W-2s, 1099s, statements) in new tabs. ProConnect → Return Review → prepared return PDF in a separate tab.</div>
+      </div>
+    </div>
+
+    <div class="step" data-i="1">
+      <span class="step-num">2</span><div class="cb" id="cb1"></div>
+      <div>
+        <div class="step-label">Read the email thread — get the story</div>
+        <div class="step-desc">Understand client situation, changes this year, anything flagged by client or junior preparer. This shapes what you look for.</div>
+      </div>
+    </div>
+
+    <div class="step" data-i="2">
+      <span class="step-num">3</span><div class="cb" id="cb2"></div>
+      <div>
+        <div class="step-label">Compare to prior year — spot major changes</div>
+        <div class="step-desc">Open prior year return. Look for income swings, new/dropped schedules, missing carryovers (NOL, cap loss, depreciation). Flag anomalies — don't reconcile.</div>
+      </div>
+    </div>
+
+    <div class="step" data-i="3">
+      <span class="step-num">4</span><div class="cb" id="cb3"></div>
+      <div>
+        <div class="step-label">Compare source docs to 1040 + schedules</div>
+        <div class="step-desc">Tab between docs and return. Wages, 1099 income, interest/dividends — figures must match. Multi-state W-2: confirm state allocation isn't doubled.</div>
+      </div>
+    </div>
+
+    <div class="step" data-i="4">
+      <span class="step-num">5</span><div class="cb" id="cb4"></div>
+      <div>
+        <div class="step-label">Deductions &amp; credits spot-check</div>
+        <div class="step-desc">Mortgage interest (1098) capped at loan balance. Home office % and mileage reasonable. Extension payments applied. Child care EIN + dependent match.</div>
+      </div>
+    </div>
+
+    <div class="step" data-i="5">
+      <span class="step-num">6</span><div class="cb" id="cb5"></div>
+      <div>
+        <div class="step-label">Run "Check Return" diagnostics <span class="tag tag-g">triage gate</span></div>
+        <div class="step-desc">Fix minor e-file errors directly. Multiple critical errors → send back to junior team with notes and move on. Don't get stuck.</div>
+      </div>
+    </div>
+
+    <div class="step" data-i="6">
+      <span class="step-num">7</span><div class="cb" id="cb6"></div>
+      <div>
+        <div class="step-label">Update Monday.com → hand off to assistant</div>
+        <div class="step-desc">Mark Senior Review complete. Assistant handles PDF, password protection, and client draft from here.</div>
+      </div>
+    </div>
+
+  </div>
+
+  <div class="right-col">
+
+    <!-- Return counter -->
+    <div class="counter-card">
+      <div class="counter-label">Returns reviewed — goal: 7 &nbsp;·&nbsp; max: 15</div>
+      <span class="cnt-val" id="cnt">0</span>
+      <div class="goal-track" id="goal-msg">0 done · <strong>7 to reach goal</strong></div>
+      <div class="dots" id="dots"></div>
+      <div class="email-btns" style="margin-top:10px;margin-bottom:6px;">
+        <button class="email-btn" id="inc" style="background:#f0fdf4;border-color:#86efac;color:#15803d;">+ Add return</button>
+        <button class="email-btn minus" id="dec">− Undo</button>
+      </div>
+      <button class="reset-btn" id="rst" disabled>↺ Complete all 7 steps to auto-log return</button>
+    </div>
+
+    <!-- Email counter -->
+    <div class="email-card">
+      <div class="counter-label">Emails sent today</div>
+      <span class="email-val" id="email-cnt">0</span>
+      <div class="email-btns">
+        <button class="email-btn" id="email-inc">+ Email sent</button>
+        <button class="email-btn minus" id="email-dec">− Undo</button>
+      </div>
+    </div>
+
+    <!-- Time log -->
+    <div class="time-log">
+      <div class="time-log-title">Time log</div>
+      <div id="log-entries"><div class="empty-log">No returns logged yet</div></div>
+    </div>
+
+  </div>
+</div>
+
+<script>
+const TOTAL = 7, GOAL = 15, MIN_GOAL = 7;
+let checked = new Array(TOTAL).fill(false);
+let dayCount = 0, emailCount = 0;
+let t0 = null, times = [];
+
+document.getElementById('date-display').textContent = new Date().toLocaleDateString('en-US', {
+  weekday: 'long', month: 'long', day: 'numeric', year: 'numeric'
+});
+
+function buildDots() {
+  const wrap = document.getElementById('dots');
+  wrap.innerHTML = '';
+  for (let i = 1; i <= GOAL; i++) {
+    const d = document.createElement('div');
+    d.className = 'dot' + (i <= dayCount ? ' filled' : i === MIN_GOAL ? ' goal' : '');
+    d.textContent = i;
+    wrap.appendChild(d);
+  }
+}
+
+function updateLog() {
+  const el = document.getElementById('log-entries');
+  if (!times.length) { el.innerHTML = '<div class="empty-log">No returns logged yet</div>'; return; }
+  el.innerHTML = times.map((m, i) =>
+    `<div class="log-entry"><span style="color:#555">Return ${i + 1}</span><span class="log-time">${m} min</span></div>`
+  ).join('');
+}
+
+function update() {
+  const done = checked.filter(Boolean).length;
+  const allDone = done === TOTAL;
+
+  document.getElementById('s-steps').innerHTML = done + ' <span>/ 7</span>';
+  document.getElementById('step-bar').style.width = Math.round(done / TOTAL * 100) + '%';
+  document.getElementById('step-prog').textContent = done + ' of 7 complete';
+
+  document.getElementById('s-today').innerHTML = dayCount + ' <span>/ 15</span>';
+  document.getElementById('day-bar').style.width = Math.round(dayCount / GOAL * 100) + '%';
+  document.getElementById('cnt').textContent = dayCount;
+
+  document.getElementById('s-emails').textContent = emailCount;
+  document.getElementById('email-cnt').textContent = emailCount;
+  document.getElementById('email-bar').style.width = Math.min(Math.round(emailCount / 20 * 100), 100) + '%';
+
+  if (times.length) {
+    document.getElementById('s-avg').textContent = Math.round(times.reduce((a, b) => a + b) / times.length);
+  }
+
+  const leftMin = Math.max(MIN_GOAL - dayCount, 0);
+  const leftMax = Math.max(GOAL - dayCount, 0);
+  let goalMsg = '';
+  if (dayCount === 0) {
+    goalMsg = '0 done · <strong>7 to reach goal</strong>';
+  } else if (dayCount < MIN_GOAL) {
+    goalMsg = dayCount + ' done · <strong>' + leftMin + ' to reach goal</strong>';
+  } else if (dayCount < GOAL) {
+    goalMsg = '✅ Goal met! ' + dayCount + ' done · <strong>' + leftMax + ' more to hit max (15)</strong>';
+  } else {
+    goalMsg = '🎯 Max reached! ' + dayCount + ' returns reviewed';
+  }
+  document.getElementById('goal-msg').innerHTML = goalMsg;
+  document.getElementById('complete-banner').style.display = dayCount >= MIN_GOAL ? 'block' : 'none';
+
+  const btn = document.getElementById('rst');
+  btn.disabled = !allDone;
+  btn.textContent = allDone ? '↺ Log return & reset for next' : '↺ Complete all 7 steps to log return';
+
+  buildDots();
+  updateLog();
+}
+
+document.querySelectorAll('.step').forEach(el => {
+  el.addEventListener('click', function () {
+    const i = +this.dataset.i;
+    if (!t0 && !checked[i]) t0 = Date.now();
+    checked[i] = !checked[i];
+    const cb = document.getElementById('cb' + i);
+    if (checked[i]) { cb.classList.add('on'); this.classList.add('done'); }
+    else { cb.classList.remove('on'); this.classList.remove('done'); }
+    update();
+  });
+});
+
+document.getElementById('rst').addEventListener('click', function () {
+  if (this.disabled) return;
+  if (t0) { const m = Math.round((Date.now() - t0) / 60000); if (m > 0) times.push(m); }
+  t0 = null;
+  dayCount = Math.min(dayCount + 1, 99);
+  checked.fill(false);
+  document.querySelectorAll('.step').forEach(el => {
+    el.classList.remove('done');
+    document.getElementById('cb' + el.dataset.i).classList.remove('on');
+  });
+  document.querySelector('.card').classList.add('all-done-flash');
+  setTimeout(() => document.querySelector('.card').classList.remove('all-done-flash'), 400);
+  update();
+});
+
+document.getElementById('inc').addEventListener('click', () => { dayCount = Math.min(dayCount + 1, 99); update(); });
+document.getElementById('dec').addEventListener('click', () => { dayCount = Math.max(dayCount - 1, 0); update(); });
+document.getElementById('email-inc').addEventListener('click', () => { emailCount++; update(); });
+document.getElementById('email-dec').addEventListener('click', () => { emailCount = Math.max(emailCount - 1, 0); update(); });
+
+update();
+</script>
+</body>
+</html>
